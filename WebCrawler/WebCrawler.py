@@ -14,17 +14,23 @@ defaults = config_raw.defaults()
 connString = config_raw.get('DEFAULT', 'url')
 print(connString)
 
+def GetDataFrame(dateString):
+	r = requests.post(connString + dateString + '&type=ALLBUT0999')
+	df = pd.read_csv(StringIO("\n".join([i.translate({ord(c): None for c in ' '}) 
+										for i in r.text.split('\n') 
+										if len(i.split('",')) == 17 and i[0] != '='])), header=0)
+
+	return df
+	
+
 def GetStockList():
 	#dateString = '20190224'
 	for idx in range(10):
 		try:
 			dateString = datetime.strftime(datetime.now() - timedelta(idx), '%Y%m%d')
-			print(dateString)
-			r = requests.post(connString + dateString + '&type=ALLBUT0999')
-			df = pd.read_csv(StringIO("\n".join([i.translate({ord(c): None for c in ' '}) 
-											 for i in r.text.split('\n') 
-											 if len(i.split('",')) == 17 and i[0] != '='])), header=0)
+			print(dateString)			
 			
+			df = GetDataFrame(dateString)
 			stockList = []
 			stockNOList = df['證券代號']
 			stockNameList = df['證券名稱']
