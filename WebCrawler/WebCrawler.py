@@ -6,6 +6,7 @@ from io import StringIO
 import pandas as pd
 import numpy as np
 from MongoDB import *
+from operator import itemgetter
 
 cfg = "./config.cfg"
 config_raw = configparser.RawConfigParser()
@@ -51,15 +52,35 @@ def GetStockList():
 			print('Error. Retry: ' + str(idx + 1))
 
 def GetStockInfo():
-	days = 3000
-	#days = Not set
+	tmpList = GetAllLog()
+	logList = sorted(tmpList, key=itemgetter('Date'), reverse=True)
+	dateList = []
 
-	for idx in range(days):
+	if(len(logList) >0):
+		latestDate = logList[0].get("Date")
+		count = 0
+		while True:
+			tmpDate = datetime.strftime(datetime.now() - timedelta(count), '%Y%m%d')
+			if tmpDate == latestDate:
+				break
+
+			dateList.append(tmpDate)
+			count = count + 1
+		
+		matches = [d['Date'] for d in logList if d['IsSuccess'] == False and d["IsWeekend"] == False]
+		dateList.extend(matches)
+	else:
+		days = 3000
+		#days = Not set
+		for idx in range(days):
+			tmpDate = datetime.strftime(datetime.now() - timedelta(idx), '%Y%m%d')
+			dateList.append(tmpDate)
+		
+	for idx in range(len(dateList)):
 		isWeekend = False
-		dateString = ''
+		dateString = dateList[idx]
 
 		try:
-			dateString = datetime.strftime(datetime.now() - timedelta(idx), '%Y%m%d')
 			weekNo = datetime.strptime(dateString, '%Y%m%d').weekday()
 			if weekNo >= 5:
 				isWeekend = True
@@ -102,8 +123,6 @@ def GetStockInfo():
 			log = {"Date":dateString, "IsSuccess":False, "IsWeekend":isWeekend}
 			InsertParserLog(log)
 			print('Error')
-
-	InsertStockInfo()
 
 if __name__ == "__main__":
 	cmd = 1

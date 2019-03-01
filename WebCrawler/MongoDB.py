@@ -29,4 +29,8 @@ def InsertOrUpdateStockInfo(stockInfoList):
 
 def InsertParserLog(log):
 	collection = db[stockParserLogCollection]
-	collection.insert_one(log)
+	collection.update({ "Date": log.get("Date") },log,True)
+
+def GetAllLog():
+	collection = db[stockParserLogCollection]
+	return collection.find({})
