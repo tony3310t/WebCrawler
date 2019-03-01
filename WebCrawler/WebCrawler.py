@@ -43,17 +43,72 @@ def GetStockList():
 				stock = {}
 				stock['Name'] = stockNameList[index]
 				stock['No'] = stockNOList[index]				
-				stockList.append(stock);
+				stockList.append(stock)
 			
 			InsertStockList(stockList)
 			break
 		except:
-			print('Error. Retry: ' + str(idx+1))
+			print('Error. Retry: ' + str(idx + 1))
 
+def GetStockInfo():
+	days = 3000
+	#days = Not set
 
+	for idx in range(days):
+		isWeekend = False
+		dateString = ''
+
+		try:
+			dateString = datetime.strftime(datetime.now() - timedelta(idx), '%Y%m%d')
+			weekNo = datetime.strptime(dateString, '%Y%m%d').weekday()
+			if weekNo >= 5:
+				isWeekend = True
+		except:
+			isWeekend = False
+
+		print(dateString)
+		try:		
+			df = GetDataFrame(dateString)
+
+			stockInfoList = []
+			stockNOList = df['證券代號']
+			stockTranMountList = df['成交股數']
+			stockTranPieceList = df['成交筆數']
+			stockOpenList = df['開盤價']
+			stockHighList = df['最高價']
+			stockLowList = df['最低價']
+			stockCloseList = df['收盤價']
+			stockPERatioList = df['本益比']
+
+			for index in range(len(stockNOList)):
+				stockInfo = {}
+				stockInfo['StockInfo'] = {
+					"StockPERatio":stockPERatioList[index],
+					"stockCloseList":stockCloseList[index],
+					"stockLowList":stockLowList[index],
+					"stockHighList":stockHighList[index],
+					"stockOpenList":stockOpenList[index],
+					"stockTranPieceList":stockTranPieceList[index],
+					"stockTranMountList":stockTranMountList[index]
+				}
+				stockInfo['Date'] = dateString
+				stockInfo['No'] = stockNOList[index]				
+				stockInfoList.append(stockInfo)
+
+			InsertOrUpdateStockInfo(stockInfoList)
+			log = {"Date":dateString, "IsSuccess":True, "IsWeekend":isWeekend}
+			InsertParserLog(log)
+		except:
+			log = {"Date":dateString, "IsSuccess":False, "IsWeekend":isWeekend}
+			InsertParserLog(log)
+			print('Error')
+
+	InsertStockInfo()
 
 if __name__ == "__main__":
 	cmd = 1
 	#cmd = int(sys.argv[1])
 	if cmd == 1314:
 		GetStockList()
+	elif cmd == 1:
+		GetStockInfo()
